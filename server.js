@@ -1,15 +1,14 @@
-var
-    path = require('path'),
-    net = require('net'),
-    chalk = require('chalk'),
-    jade = require('jade'),
-    serveStatic = require('serve-static'),
-    environment = process.env.NODE_ENV = process.env.NODE_ENV || 'production',
-    app = require('./app.js'),
-    cardReader = require('./lib/cardReader'),
-    leaderboard = require('./lib/leaderboard');
+var path = require('path');
+var net = require('net');
+var chalk = require('chalk');
+var jade = require('jade');
+var serveStatic = require('serve-static');
+var environment = process.env.NODE_ENV = process.env.NODE_ENV || 'production';
+var app = require('./app.js');
+var cardReader = require('./lib/cardReader');
+var leaderboard = require('./lib/leaderboard');
 
-getConfig = require('./config');
+getConfig = require('./config.js');
 config = getConfig[environment];
 settings = getConfig.global;
 
@@ -35,29 +34,29 @@ io = io.listen(config.wsPort);
 console.log(chalk.green('Websocket Server: Listening on port ' + config.wsPort));
 
 io.configure(function() {
-    io.set('log level', 2);
+  io.set('log level', 2);
 });
 
 app.get('/', function(req, res) {
-    
-    delete require.cache[path.resolve('./versions/js.json')];
-    delete require.cache[path.resolve('./versions/css.json')];
-    
-    res.render('home.jade', {
-        title: 'Ping Pong',
-        metaDesc: 'Ping Pong',
-        JSVersions: require('./versions/js'),
-        CSSVersions: require('./versions/css')
-    });
-    
+
+  delete require.cache[path.resolve('./versions/js.json')];
+  delete require.cache[path.resolve('./versions/css.json')];
+
+  res.render('home.jade', {
+    title: 'Ping Pong',
+    metaDesc: 'Ping Pong',
+    JSVersions: require('./versions/js'),
+    CSSVersions: require('./versions/css')
+  });
+
 });
 
 app.get('/leaderboard', function(req, res) {
-    // This could use a streaming response instead
-    leaderboard.get(10)
-        .then(function(players) {
-            res.json(players.toJSON());
-        });
+  // This could use a streaming response instead
+  leaderboard.get(10)
+    .then(function(players) {
+      res.json(players.toJSON());
+    });
 });
 
 app.listen(config.clientPort);
@@ -68,33 +67,33 @@ game = new gameController();
 game.feelersPingReceived();
 
 io.sockets.on('connection', function(client) {
-    game.reset();
-    game.clientJoined();
-    cardReader.connectionStatus();
-    client.on('fakeScored', game.feelerPressed); // Fake score event for easier testing
+  game.reset();
+  game.clientJoined();
+  // cardReader.connectionStatus();
+  client.on('fakeScored', game.feelerPressed); // Fake score event for easier testing
 });
 
 core.on('scored', game.feelerPressed);
-core.on('ping', game.feelersPingReceived);    
+core.on('ping', game.feelersPingReceived);
 core.on('batteryLow', game.batteryLow);
 
 core.on('online', function() {
-    game.feelersOnline();
-    game.feelerStatus();
-    game.feelersPingReceived();
+  game.feelersOnline();
+  game.feelerStatus();
+  game.feelersPingReceived();
 });
 
-cardReader.on('read', function(data) {
-    console.log('New read', data);
-    game.addPlayerByRfid(data.rfid);
-});
+// cardReader.on('read', function(data) {
+//   console.log('New read', data);
+//   game.addPlayerByRfid(data.rfid);
+// });
 
-cardReader.on('err', game.cardReadError);
+// cardReader.on('err', game.cardReadError);
 
-cardReader.on('connect', function() {
-    io.sockets.emit('cardReader.connect');
-});
+// cardReader.on('connect', function() {
+//   io.sockets.emit('cardReader.connect');
+// });
 
-cardReader.on('disconnect', function() {
-    io.sockets.emit('cardReader.disconnect');
-});
+// cardReader.on('disconnect', function() {
+//   io.sockets.emit('cardReader.disconnect');
+// });

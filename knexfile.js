@@ -6,4 +6,5 @@ module.exports = {
     connection: config.development.database.connection,
     migrations: config.development.database.migrations
   }
+  console.log('development', development);
 };
